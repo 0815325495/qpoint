@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2PS Q-Point Inspection Form</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for capturing form as image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Panzoom for image zoom/pan -->
+    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <!-- Google Fonts: Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the application */
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        /* Custom styling for radio buttons to look like selectable cards */
+        .radio-card input[type="radio"] {
+            display: none;
+        }
+        .radio-card > label {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .radio-card input[type="radio"]:checked + label {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .radio-card input[type="radio"][value="ng"]:checked + label {
+            background-color: #fecaca; /* red-200 */
+            border-color: #f87171; /* red-400 */
+        }
+        .radio-card input[type="radio"][value="ok"]:checked + label {
+            background-color: #d1fae5; /* green-200 */
+            border-color: #34d399; /* green-400 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main form container -->
+    <div id="form-container" class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 md:p-10">
+        <div id="current-date" class="text-right text-sm text-gray-500 mb-2"></div>
+        <form id="qpointForm">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">2PS Q-Point</h1>
+                <p class="text-gray-500 mt-2">จุดสำคัญในการตรวจสอบ ชิ้นงาน</p>
+            </div>
+
+            <!-- Item Details Section -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label for="inspectionPoint" class="block text-sm font-medium text-gray-700 mb-1">จุดที่ตรวจสอบ (Inspection Point)</label>
+                    <input type="text" id="inspectionPoint" name="inspectionPoint" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น การประกอบชิ้นส่วน A">
+                </div>
+                <div>
+                    <label for="carModel" class="block text-sm font-medium text-gray-700 mb-1">MODEL รถ</label>
+                    <input type="text" id="carModel" name="carModel" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น YARIS, COROLLA">
+                </div>
+            </div>
+
+            <!-- Comparison Section: NG vs OK -->
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <!-- NG (Not Good) Column -->
+                <div class="radio-card">
+                    <input type="radio" id="ng" name="status" value="ng" required>
+                    <label for="ng" class="block p-6 border-2 border-gray-200 rounded-xl text-center">
+                        <h2 class="text-2xl font-bold text-red-600 mb-4">NG (Not Good)</h2>
+                        <div id="ngImageContainer" class="w-full min-h-[12rem] bg-red-50 rounded-lg flex flex-col items-center justify-center p-2 gap-y-2">
+                            <div id="ngPlaceholder" class="text-center text-red-400 p-4">
+                                <svg class="w-16 h-16 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                                <p class="mt-2 text-sm">ไม่มีรูปภาพ NG</p>
+                            </div>
+                        </div>
+                        <input type="file" id="ngImageInput" name="ngImage" accept="image/*" class="hidden">
+                        <button type="button" id="addNgImageBtn" class="mt-4 w-full bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg border border-red-200 hover:bg-red-200 transition-colors">
+                            เพิ่มรูปภาพ NG
+                        </button>
+                        <p class="text-gray-600 mt-4">ลักษณะงานที่ผิดปกติหรือไม่เป็นไปตามมาตรฐาน</p>
+                    </label>
+                </div>
+
+                <!-- OK Column -->
+                <div class="radio-card">
+                    <input type="radio" id="ok" name="status" value="ok" required>
+                    <label for="ok" class="block p-6 border-2 border-gray-200 rounded-xl text-center">
+                        <h2 class="text-2xl font-bold text-green-600 mb-4">OK</h2>
+                        <div id="okImageContainer" class="w-full min-h-[12rem] bg-green-50 rounded-lg flex flex-col items-center justify-center p-2 gap-y-2">
+                             <div id="okPlaceholder" class="text-center text-green-400 p-4">
+                               <svg class="w-16 h-16 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                                <p class="mt-2 text-sm">ไม่มีรูปภาพ OK</p>
+                            </div>
+                        </div>
+                        <input type="file" id="okImageInput" name="okImage" accept="image/*" class="hidden">
+                         <button type="button" id="addOkImageBtn" class="mt-4 w-full bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg border border-green-200 hover:bg-green-200 transition-colors">
+                            เพิ่มรูปภาพ OK
+                        </button>
+                        <p class="text-gray-600 mt-4">ลักษณะงานที่ถูกต้องและเป็นไปตามมาตรฐาน</p>
+                    </label>
+                </div>
+            </div>
+
+            <!-- NG Additional Details Section -->
+            <div class="mb-8 hidden" id="detailsSection">
+                <label for="details" class="block text-sm font-medium text-gray-700 mb-1">คำอธิบายเพิ่มเติม <span class="text-red-500">(โปรดระบุสาเหตุของ NG)</span></label>
+                <textarea id="details" name="details" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" placeholder="อธิบายรายละเอียดของปัญหาที่พบ..."></textarea>
+            </div>
+
+            <!-- OK Additional Details Section -->
+            <div class="mb-8 hidden" id="okDetailsSection">
+                <label for="okDetails" class="block text-sm font-medium text-gray-700 mb-1">คำอธิบายเพิ่มเติม (OK)</label>
+                <textarea id="okDetails" name="okDetails" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
+            </div>
+
+            <!-- Submission Button -->
+            <div class="text-center">
+                <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-10 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">ส่งและบันทึกเป็นรูปภาพ</button>
+            </div>
+        </form>
+
+        <!-- Success Message Modal -->
+        <div id="successMessage" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+                <h3 class="text-2xl font-bold text-green-600 mb-4">บันทึกข้อมูลสำเร็จ!</h3>
+                <p>รูปภาพฟอร์มถูกดาวน์โหลดเรียบร้อยแล้ว</p>
+                <button onclick="closeMessage()" class="mt-6 bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const form = document.getElementById('qpointForm');
+        const formContainer = document.getElementById('form-container');
+        const ngRadio = document.getElementById('ng');
+        const okRadio = document.getElementById('ok');
+        const detailsSection = document.getElementById('detailsSection');
+        const detailsTextarea = document.getElementById('details');
+        const successMessage = document.getElementById('successMessage');
+        const okDetailsSection = document.getElementById('okDetailsSection');
+        const okDetailsTextarea = document.getElementById('okDetails');
+
+        // New image upload elements
+        const addNgImageBtn = document.getElementById('addNgImageBtn');
+        const addOkImageBtn = document.getElementById('addOkImageBtn');
+        const ngImageInput = document.getElementById('ngImageInput');
+        const okImageInput = document.getElementById('okImageInput');
+        const ngImageContainer = document.getElementById('ngImageContainer');
+        const okImageContainer = document.getElementById('okImageContainer');
+        const ngPlaceholder = document.getElementById('ngPlaceholder');
+        const okPlaceholder = document.getElementById('okPlaceholder');
+
+        // Set the current date
+        const dateElement = document.getElementById('current-date');
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        dateElement.textContent = today.toLocaleDateString('th-TH', options);
+
+        // Function to handle showing/hiding the details section
+        function handleStatusChange() {
+            if (ngRadio.checked) {
+                detailsSection.classList.remove('hidden');
+                detailsTextarea.required = true;
+                okDetailsSection.classList.add('hidden');
+                okDetailsTextarea.required = false;
+            } else if (okRadio.checked) {
+                detailsSection.classList.add('hidden');
+                detailsTextarea.required = false;
+                okDetailsSection.classList.remove('hidden');
+            }
+        }
+
+        // Function to add a new image preview with zoom/pan controls
+        function addImagePreview(input, placeholder, container) {
+            const file = input.files[0];
+            if (!file) return;
+
+            placeholder.classList.add('hidden');
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const previewWrapper = document.createElement('div');
+                previewWrapper.className = 'relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.ondragstart = () => false; // Prevent native image dragging
+                img.className = 'w-full h-full object-contain bg-white cursor-grab';
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
+                deleteBtn.className = 'delete-image-btn absolute top-1.5 right-1.5 bg-black bg-opacity-50 text-white rounded-full p-0.5 hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-white z-10';
+
+                const controlsWrapper = document.createElement('div');
+                controlsWrapper.className = 'image-controls absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 rounded-full p-1 flex items-center gap-x-1 text-white text-xs z-10';
+                controlsWrapper.innerHTML = `
+                    <button type="button" class="zoom-in-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="ซูมเข้า">+</button>
+                    <button type="button" class="zoom-out-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="ซูมออก">-</button>
+                    <button type="button" class="reset-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="รีเซ็ต">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-4.13M20 15a9 9 0 01-14.13 4.13"></path></svg>
+                    </button>
+                `;
+
+                deleteBtn.addEventListener('click', () => {
+                    container.removeChild(previewWrapper);
+                    if (container.children.length <= 1) { // 1 is the placeholder
+                        placeholder.classList.remove('hidden');
+                    }
+                });
+
+                previewWrapper.appendChild(img);
+                previewWrapper.appendChild(deleteBtn);
+                previewWrapper.appendChild(controlsWrapper);
+                container.appendChild(previewWrapper);
+                
+                // Initialize Panzoom
+                const panzoom = Panzoom(img, {
+                    maxScale: 10,
+                    minScale: 0.5,
+                    contain: 'outside',
+                    canvas: true,
+                });
+
+                // Zoom with wheel
+                previewWrapper.addEventListener('wheel', panzoom.zoomWithWheel, { passive: false });
+
+                // Hook up buttons
+                const zoomInBtn = controlsWrapper.querySelector('.zoom-in-btn');
+                const zoomOutBtn = controlsWrapper.querySelector('.zoom-out-btn');
+                const resetBtn = controlsWrapper.querySelector('.reset-btn');
+
+                zoomInBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.zoomIn(); });
+                zoomOutBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.zoomOut(); });
+                resetBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.reset(); });
+            };
+
+            reader.readAsDataURL(file);
+            input.value = ''; // Reset input to allow selecting the same file again
+        }
+        
+        // Add event listeners
+        ngRadio.addEventListener('change', handleStatusChange);
+        okRadio.addEventListener('change', handleStatusChange);
+        addNgImageBtn.addEventListener('click', () => ngImageInput.click());
+        addOkImageBtn.addEventListener('click', () => okImageInput.click());
+        ngImageInput.addEventListener('change', (e) => addImagePreview(e.target, ngPlaceholder, ngImageContainer));
+        okImageInput.addEventListener('change', (e) => addImagePreview(e.target, okPlaceholder, okImageContainer));
+
+        // Handle form submission
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const ngDesc = detailsTextarea.value;
+            const okDesc = okDetailsTextarea.value;
+            const ngCardLabel = document.querySelector('label[for="ng"]');
+            const okCardLabel = document.querySelector('label[for="ok"]');
+            const submitButton = event.submitter;
+            let ngDescElement = null, okDescElement = null;
+
+            if (ngDesc.trim() !== '') {
+                ngDescElement = document.createElement('div');
+                ngDescElement.className = 'mt-4 p-3 bg-red-100 border border-red-200 rounded-lg text-left text-sm text-gray-800 whitespace-pre-wrap';
+                ngDescElement.textContent = `คำอธิบาย NG:\n${ngDesc}`;
+                ngCardLabel.appendChild(ngDescElement);
+            }
+            if (okDesc.trim() !== '') {
+                okDescElement = document.createElement('div');
+                okDescElement.className = 'mt-4 p-3 bg-green-100 border border-green-200 rounded-lg text-left text-sm text-gray-800 whitespace-pre-wrap';
+                okDescElement.textContent = `คำอธิบาย OK:\n${okDesc}`;
+                okCardLabel.appendChild(okDescElement);
+            }
+            
+            detailsSection.classList.add('hidden');
+            okDetailsSection.classList.add('hidden');
+            submitButton.classList.add('hidden');
+            addNgImageBtn.classList.add('hidden');
+            addOkImageBtn.classList.add('hidden');
+
+            const allImageControls = document.querySelectorAll('.delete-image-btn, .image-controls');
+            allImageControls.forEach(el => el.classList.add('hidden'));
+
+            ngCardLabel.classList.add('bg-red-200', 'border-red-400');
+            okCardLabel.classList.add('bg-green-200', 'border-green-400');
+
+            setTimeout(() => {
+                html2canvas(formContainer, { scale: 2, useCORS: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    const date = new Date();
+                    const filename = `2PS-Q-Point_${date.toISOString().slice(0,10)}_${date.toTimeString().slice(0,8).replace(/:/g,'-')}.png`;
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click(); 
+                    successMessage.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        form.reset();
+                        handleStatusChange();
+                        // Reset image containers
+                        while (ngImageContainer.children.length > 1) {
+                            ngImageContainer.removeChild(ngImageContainer.lastChild);
+                        }
+                        ngPlaceholder.classList.remove('hidden');
+                        while (okImageContainer.children.length > 1) {
+                            okImageContainer.removeChild(okImageContainer.lastChild);
+                        }
+                        okPlaceholder.classList.remove('hidden');
+                    }, 500);
+                }).catch(err => {
+                    console.error('oops, something went wrong!', err);
+                    alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ!');
+                }).finally(() => {
+                    if (ngDescElement) ngDescElement.remove();
+                    if (okDescElement) okDescElement.remove();
+                    submitButton.classList.remove('hidden');
+                    addNgImageBtn.classList.remove('hidden');
+                    addOkImageBtn.classList.remove('hidden');
+                    allImageControls.forEach(el => el.classList.remove('hidden'));
+                    ngCardLabel.classList.remove('bg-red-200', 'border-red-400');
+                    okCardLabel.classList.remove('bg-green-200', 'border-green-400');
+                });
+            }, 100);
+        });
+
+        function closeMessage() {
+            successMessage.classList.add('hidden');
+        }
+    </script>
+
+</body>
+</html>
+
