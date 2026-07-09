@@ -5,6 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🧋 ชานมพี่หมี — สั่งน้ำ</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK (module) -->
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove, set, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDDo6Jork5WSzMtP3xOwu14jPANkPrfBx8",
+  authDomain:        "skillemployee-5eee2.firebaseapp.com",
+  databaseURL:       "https://skillemployee-5eee2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "skillemployee-5eee2",
+  storageBucket:     "skillemployee-5eee2.firebasestorage.app",
+  messagingSenderId: "238280209673",
+  appId:             "1:238280209673:web:1c14432abd86f4d41d8fd8",
+  measurementId:     "G-GT82W5M9F9"
+};
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const ordersRef = ref(db, 'milk-tea-orders');
+
+  // ── expose to global scope ──────────────────────────────────
+  window._fb = {
+    push:   (data)    => push(ordersRef, { ...data, createdAt: Date.now() }),
+    delete: (key)     => remove(ref(db, `milk-tea-orders/${key}`)),
+    clear:  ()        => set(ordersRef, null),
+    listen: (cb, errCb) => onValue(ordersRef, cb, errCb),
+  };
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));   // ← window not document
+  console.log('[FB] Firebase module loaded OK');
+} catch (e) {
+  console.error('[FB] Init error:', e);
+  window._firebaseError = e.message;
+  window.dispatchEvent(new Event('firebase-ready'));
+}
+</script>
 <style>
   :root {
     --bg: #fdf6ee;
@@ -64,6 +104,59 @@
     border-radius: 20px;
     padding: 2px 12px;
     margin-top: 6px;
+  }
+
+  /* CONNECTION STATUS */
+  .conn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-top: 6px;
+    margin-left: 6px;
+    transition: all 0.3s;
+  }
+  .conn-badge.connecting { background: rgba(255,255,255,0.15); color: #f5dba0; }
+  .conn-badge.online     { background: rgba(60,170,111,0.25);  color: #b8ffd9; }
+  .conn-badge.offline    { background: rgba(229,82,82,0.25);   color: #ffc2c2; }
+  .conn-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .connecting .conn-dot { background: #f5dba0; animation: pulse 1.2s infinite; }
+  .online     .conn-dot { background: #3caa6f; }
+  .offline    .conn-dot { background: #e55252; }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  /* LOADING OVERLAY */
+  .loading-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(253,246,238,0.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px;
+    transition: opacity 0.4s;
+  }
+  .loading-overlay.hide { opacity: 0; pointer-events: none; }
+  .loading-spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--border);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    color: var(--brown);
+    font-size: 1rem;
   }
 
   /* LAYOUT */
@@ -768,11 +861,20 @@
 </head>
 <body>
 
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">🧋 กำลังเชื่อมต่อ Firebase…</div>
+</div>
+
 <header>
   <div style="font-size:1.8rem;">🧋🐻</div>
   <h1>ชานมพี่หมี — สั่งน้ำ</h1>
   <p>Brother Bear Milk Tea · Order System</p>
   <span class="header-badge">✦ เพิ่มรายชื่อ + เลือกเมนู ✦</span>
+  <span class="conn-badge connecting" id="connBadge">
+    <span class="conn-dot"></span> กำลังเชื่อมต่อ…
+  </span>
 </header>
 
 <div class="container">
@@ -888,7 +990,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== MENU DATA =====
+// ─── MENU DATA ────────────────────────────────────────────────
 const MENU = {
   '🍵 ชานม': [
     { name: 'ชานมไต้หวัน', price: 20 },
@@ -975,18 +1077,117 @@ const MENU = {
   ],
 };
 
+// ─── STATE ────────────────────────────────────────────────────
 let selectedCategory = Object.keys(MENU)[0];
-let selectedDrink = null;
-let sweetness = 'หวานปกติ';
-let orders = [];
-let tallyOrders = {}; // global: drink name -> orders[], for chip onclick
+let selectedDrink    = null;
+let sweetness        = 'หวานปกติ';
+let orders           = [];   // local mirror of Firebase data
+let tallyOrders      = {};   // drink -> orders[]  (for modal)
 
-// ===== INIT =====
+// ─── FIREBASE BOOT ───────────────────────────────────────────
+// ─── FIREBASE BOOT ───────────────────────────────────────────
+function bootFirebase() {
+  if (window._firebaseError) {
+    setConn('offline');
+    showDebug('❌ Firebase Error: ' + window._firebaseError);
+    return;
+  }
+  if (!window._fb) {
+    setConn('offline');
+    showDebug('❌ window._fb ไม่พร้อม');
+    return;
+  }
+
+  setConn('connecting');
+  showDebug('🔄 กำลัง listen onValue…');
+
+  window._fb.listen(
+    // ── success callback ──────────────────────────────────────
+    (snapshot) => {
+      const val = snapshot.val();
+      orders = val
+        ? Object.entries(val)
+            .map(([fbKey, data]) => ({ ...data, fbKey }))
+            .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+        : [];
+      renderOrders();
+      updateSummary();
+      setConn('online');
+      showDebug(`✅ sync OK — ${orders.length} รายการ`);
+
+      // hide loading overlay on first snapshot
+      const lo = document.getElementById('loadingOverlay');
+      if (lo) { lo.classList.add('hide'); setTimeout(() => lo.remove(), 500); }
+    },
+    // ── error callback ────────────────────────────────────────
+    (err) => {
+      setConn('offline');
+      showDebug('❌ onValue error: ' + err.message);
+      // hide loading overlay so UI isn't stuck
+      const lo = document.getElementById('loadingOverlay');
+      if (lo) { lo.classList.add('hide'); setTimeout(() => lo.remove(), 500); }
+    }
+  );
+}
+
+function setConn(state) {
+  const el = document.getElementById('connBadge');
+  if (!el) return;
+  el.className = 'conn-badge ' + state;
+  const labels = {
+    connecting: '⏳ กำลังเชื่อมต่อ…',
+    online:     '🟢 Firebase เชื่อมต่อแล้ว',
+    offline:    '🔴 ออฟไลน์ / Error'
+  };
+  el.innerHTML = `<span class="conn-dot"></span> ${labels[state] || state}`;
+}
+
+// ── debug log (small box under header, auto-dismiss) ──────────
+function showDebug(msg) {
+  console.log('[FB]', msg);
+  let box = document.getElementById('debugBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'debugBox';
+    box.style.cssText = `
+      position:fixed; top:72px; left:50%; transform:translateX(-50%);
+      background:#1a1a2e; color:#a0ffb0; font-family:monospace;
+      font-size:0.75rem; padding:6px 16px; border-radius:8px;
+      z-index:9998; max-width:90vw; text-align:center;
+      box-shadow:0 2px 12px rgba(0,0,0,0.3);
+      transition:opacity 0.4s;
+    `;
+    document.body.appendChild(box);
+  }
+  box.style.opacity = '1';
+  box.textContent = msg;
+  clearTimeout(window._debugTimer);
+  window._debugTimer = setTimeout(() => { box.style.opacity = '0'; }, 3500);
+}
+
+// ── wait for firebase module — listen on WINDOW not document ──
+if (window._firebaseReady || window._firebaseError) {
+  bootFirebase();          // already fired before our listener registered
+} else {
+  window.addEventListener('firebase-ready', bootFirebase, { once: true });
+}
+// safety fallback: if event never fires (network block), show error after 8s
+setTimeout(() => {
+  if (orders.length === 0 && !window._firebaseReady) {
+    setConn('offline');
+    showDebug('⚠️ Firebase ไม่ตอบสนองใน 8 วินาที — ตรวจสอบ internet/rules');
+    const lo = document.getElementById('loadingOverlay');
+    if (lo) { lo.classList.add('hide'); setTimeout(() => lo.remove(), 500); }
+  }
+}, 8000);
+
+// ─── INIT UI ─────────────────────────────────────────────────
 function init() {
   renderCategoryTabs();
   renderMenuGrid();
 }
 
+// ─── CATEGORY TABS ───────────────────────────────────────────
 function renderCategoryTabs() {
   const container = document.getElementById('categoryTabs');
   container.innerHTML = '';
@@ -994,38 +1195,39 @@ function renderCategoryTabs() {
     const btn = document.createElement('button');
     btn.className = 'tab-btn' + (cat === selectedCategory ? ' active' : '');
     btn.textContent = cat;
-    btn.onclick = () => { selectedCategory = cat; selectedDrink = null; renderCategoryTabs(); renderMenuGrid(); };
+    btn.onclick = () => {
+      selectedCategory = cat;
+      selectedDrink = null;
+      renderCategoryTabs();
+      renderMenuGrid();
+    };
     container.appendChild(btn);
   });
 }
 
+// ─── MENU GRID ───────────────────────────────────────────────
 function renderMenuGrid() {
   const container = document.getElementById('menuGrid');
   container.innerHTML = '';
-  const items = MENU[selectedCategory];
-  items.forEach(item => {
+  MENU[selectedCategory].forEach(item => {
     const div = document.createElement('div');
     div.className = 'menu-item' + (selectedDrink === item.name ? ' selected' : '');
-    const catEmoji = selectedCategory.split(' ')[0];
     div.innerHTML = `
-      <span class="emoji">${catEmoji}</span>
+      <span class="emoji">${selectedCategory.split(' ')[0]}</span>
       <div class="name">${item.name}</div>
       <div class="price">฿${item.price}</div>
       <div class="check">✓</div>
     `;
-    div.onclick = () => {
-      selectedDrink = item.name;
-      renderMenuGrid();
-    };
+    div.onclick = () => { selectedDrink = item.name; renderMenuGrid(); };
     container.appendChild(div);
   });
 }
 
 function setSweetness(level) {
   sweetness = level;
-  document.querySelectorAll('.sweet-btn').forEach(b => {
-    b.classList.toggle('active', b.textContent === level);
-  });
+  document.querySelectorAll('.sweet-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent === level)
+  );
 }
 
 function getPrice(name) {
@@ -1036,34 +1238,39 @@ function getPrice(name) {
   return 20;
 }
 
-// ===== ADD ORDER =====
-function addOrder() {
+// ─── ADD ORDER (push to Firebase) ────────────────────────────
+async function addOrder() {
   const name = document.getElementById('personName').value.trim();
-  const qty = parseInt(document.getElementById('qty').value) || 1;
+  const qty  = parseInt(document.getElementById('qty').value) || 1;
 
-  if (!name) { showToast('⚠️ กรุณาใส่ชื่อก่อนนะ!'); return; }
+  if (!name)          { showToast('⚠️ กรุณาใส่ชื่อก่อนนะ!'); return; }
   if (!selectedDrink) { showToast('⚠️ กรุณาเลือกเมนูที่ต้องการ!'); return; }
+  if (!window._fb)    { showToast('❌ Firebase ยังไม่พร้อม รอสักครู่'); return; }
 
-  orders.push({
-    id: Date.now(),
-    person: name,
-    drink: selectedDrink,
-    price: getPrice(selectedDrink),
+  const orderData = {
+    person:   name,
+    drink:    selectedDrink,
+    price:    getPrice(selectedDrink),
     qty,
     sweetness,
     category: selectedCategory,
-  });
+    createdAt: Date.now(),
+  };
 
-  document.getElementById('personName').value = '';
-  document.getElementById('qty').value = 1;
-  selectedDrink = null;
-  renderMenuGrid();
-  renderOrders();
-  updateSummary();
-  showToast(`✅ เพิ่มออเดอร์ของ ${name} แล้ว!`);
+  try {
+    await window._fb.push(orderData);
+    document.getElementById('personName').value = '';
+    document.getElementById('qty').value = 1;
+    selectedDrink = null;
+    renderMenuGrid();
+    showToast(`✅ เพิ่มออเดอร์ของ ${name} แล้ว!`);
+  } catch (e) {
+    showToast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    showDebug('push error: ' + e.message);
+  }
 }
 
-// ===== RENDER ORDERS =====
+// ─── RENDER ORDER LIST ────────────────────────────────────────
 function renderOrders() {
   const container = document.getElementById('orderList');
   if (orders.length === 0) {
@@ -1087,34 +1294,32 @@ function renderOrders() {
         </div>
       </div>
       <div class="order-price">฿${o.price * o.qty}</div>
-      <button class="btn-del" onclick="deleteOrder(${o.id})">✕</button>
+      <button class="btn-del" data-fbkey="${o.fbKey}">✕</button>
     `;
+    div.querySelector('.btn-del').addEventListener('click', () => deleteOrder(o.fbKey));
     container.appendChild(div);
   });
 
-  // Drink tally — table rows with name chips
+  // ─── Summary table ─────────────────────────────────────────
   tallyOrders = {};
   const tally = {};
   orders.forEach(o => {
-    const key = o.drink;
-    tally[key] = (tally[key] || 0) + o.qty;
-    if (!tallyOrders[key]) tallyOrders[key] = [];
-    tallyOrders[key].push(o);
+    tally[o.drink] = (tally[o.drink] || 0) + o.qty;
+    if (!tallyOrders[o.drink]) tallyOrders[o.drink] = [];
+    tallyOrders[o.drink].push(o);
   });
+
   const tallyEl = document.getElementById('drinkTally');
   tallyEl.innerHTML = '';
-  Object.entries(tally).sort((a,b) => b[1]-a[1]).forEach(([name, count], rowIdx) => {
-    const drinkOrders = tallyOrders[name];
-    // Group by person
+  Object.entries(tally).sort((a, b) => b[1] - a[1]).forEach(([name, count], rowIdx) => {
     const personMap = {};
-    drinkOrders.forEach(o => {
+    tallyOrders[name].forEach(o => {
       personMap[o.person] = (personMap[o.person] || 0) + o.qty;
     });
     const chipsHtml = Object.entries(personMap).map(([person, qty]) => {
       const isMulti = qty > 1;
-      const multiClass = isMulti ? ' name-chip-multi' : '';
       const qtyPill = isMulti ? `<span class="qty-pill">×${qty}</span>` : '';
-      return `<span class="name-chip${multiClass}" data-drink="${name}" title="${person} · ${qty} แก้ว">${person}${qtyPill}</span>`;
+      return `<span class="name-chip${isMulti ? ' name-chip-multi' : ''}" data-drink="${name}" title="${person} · ${qty} แก้ว">${person}${qtyPill}</span>`;
     }).join('');
 
     const tr = document.createElement('tr');
@@ -1124,7 +1329,6 @@ function renderOrders() {
       <td class="td-cups"><span class="cup-badge">${count}</span></td>
       <td class="td-names">${chipsHtml}</td>
     `;
-    // attach click on each chip via event delegation on tr
     tr.querySelectorAll('.name-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const dk = chip.dataset.drink;
@@ -1136,94 +1340,88 @@ function renderOrders() {
   document.getElementById('drinkSummarySection').style.display = 'block';
 }
 
-function deleteOrder(id) {
-  orders = orders.filter(o => o.id !== id);
-  renderOrders();
-  updateSummary();
-  showToast('🗑️ ลบออเดอร์แล้ว');
+// ─── DELETE (remove from Firebase) ───────────────────────────
+async function deleteOrder(fbKey) {
+  try {
+    await window._fb.delete(fbKey);
+    showToast('🗑️ ลบออเดอร์แล้ว');
+  } catch (e) {
+    showToast('❌ ลบไม่สำเร็จ: ' + e.message);
+    showDebug('delete error: ' + e.message);
+  }
 }
 
+// ─── SUMMARY BAR ─────────────────────────────────────────────
 function updateSummary() {
   const totalOrders = orders.length;
-  const totalCups = orders.reduce((s, o) => s + o.qty, 0);
-  const totalPrice = orders.reduce((s, o) => s + o.price * o.qty, 0);
-  document.getElementById('totalOrders').textContent = totalOrders;
-  document.getElementById('totalCups').textContent = totalCups;
-  document.getElementById('totalPrice').textContent = '฿' + totalPrice.toLocaleString();
+  const totalCups   = orders.reduce((s, o) => s + o.qty, 0);
+  const totalPrice  = orders.reduce((s, o) => s + o.price * o.qty, 0);
+  document.getElementById('totalOrders').textContent   = totalOrders;
+  document.getElementById('totalCups').textContent     = totalCups;
+  document.getElementById('totalPrice').textContent    = '฿' + totalPrice.toLocaleString();
   document.getElementById('orderCountBadge').textContent = totalOrders;
 }
 
-function clearAll() {
+// ─── CLEAR ALL ────────────────────────────────────────────────
+async function clearAll() {
   if (orders.length === 0) return;
-  if (!confirm('ล้างออเดอร์ทั้งหมด?')) return;
-  orders = [];
-  renderOrders();
-  updateSummary();
-  showToast('🧹 ล้างออเดอร์ทั้งหมดแล้ว');
+  if (!confirm('ล้างออเดอร์ทั้งหมด? (จะลบออกจาก Firebase ด้วย)')) return;
+  try {
+    await window._fb.clear();
+    showToast('🧹 ล้างออเดอร์ทั้งหมดแล้ว');
+  } catch (e) {
+    showToast('❌ ล้างไม่สำเร็จ: ' + e.message);
+    showDebug('clear error: ' + e.message);
+  }
 }
 
-// ===== EXPORT =====
+// ─── EXPORT ──────────────────────────────────────────────────
 function exportOrders() {
   if (orders.length === 0) { showToast('⚠️ ยังไม่มีออเดอร์'); return; }
-
-  const totalCups = orders.reduce((s, o) => s + o.qty, 0);
+  const totalCups  = orders.reduce((s, o) => s + o.qty, 0);
   const totalPrice = orders.reduce((s, o) => s + o.price * o.qty, 0);
   const now = new Date().toLocaleString('th-TH');
-
-  // Tally
   const tally = {};
   orders.forEach(o => { tally[o.drink] = (tally[o.drink] || 0) + o.qty; });
 
-  let text = `🧋 ชานมพี่หมี — รายการสั่งน้ำ\n`;
-  text += `📅 ${now}\n`;
-  text += `${'─'.repeat(36)}\n\n`;
-  text += `📋 รายการออเดอร์:\n`;
+  let text = `🧋 ชานมพี่หมี — รายการสั่งน้ำ\n📅 ${now}\n${'─'.repeat(36)}\n\n📋 รายการออเดอร์:\n`;
   orders.forEach((o, i) => {
     text += `${i+1}. ${o.person} — ${o.drink} (${o.sweetness}) ×${o.qty} = ฿${o.price * o.qty}\n`;
   });
-  text += `\n${'─'.repeat(36)}\n`;
-  text += `📊 สรุปเมนูที่สั่ง:\n`;
+  text += `\n${'─'.repeat(36)}\n📊 สรุปเมนูที่สั่ง:\n`;
   Object.entries(tally).sort((a,b)=>b[1]-a[1]).forEach(([name, cnt]) => {
     text += `• ${name}: ${cnt} แก้ว\n`;
   });
-  text += `\n${'─'.repeat(36)}\n`;
-  text += `👥 จำนวน: ${orders.length} คน | 🧋 รวม: ${totalCups} แก้ว\n`;
-  text += `💰 ยอดรวม: ฿${totalPrice.toLocaleString()}\n`;
+  text += `\n${'─'.repeat(36)}\n👥 ${orders.length} คน | 🧋 ${totalCups} แก้ว | 💰 ฿${totalPrice.toLocaleString()}\n`;
 
-  // Copy to clipboard
-  navigator.clipboard.writeText(text).then(() => {
-    showToast('📋 คัดลอกรายการแล้ว!');
-  }).catch(() => {
-    // fallback: download
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'order-drinks.txt';
-    a.click();
-  });
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('📋 คัดลอกรายการแล้ว!'))
+    .catch(() => {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'order-drinks.txt';
+      a.click();
+    });
 }
 
-// ===== MODAL =====
+// ─── MODAL ───────────────────────────────────────────────────
 function openModal(drinkName, drinkOrders) {
-  const totalCups = drinkOrders.reduce((s, o) => s + o.qty, 0);
+  const totalCups  = drinkOrders.reduce((s, o) => s + o.qty, 0);
   const totalPrice = drinkOrders.reduce((s, o) => s + o.price * o.qty, 0);
-
-  document.getElementById('modalTitle').textContent = '🧋 ' + drinkName;
+  document.getElementById('modalTitle').textContent    = '🧋 ' + drinkName;
   document.getElementById('modalSubtitle').textContent = `${drinkOrders.length} คนสั่ง · ${totalCups} แก้ว`;
-  document.getElementById('modalTotalCups').textContent = totalCups;
-  document.getElementById('modalTotalPrice').textContent = totalPrice.toLocaleString();
+  document.getElementById('modalTotalCups').textContent   = totalCups;
+  document.getElementById('modalTotalPrice').textContent  = totalPrice.toLocaleString();
 
   const body = document.getElementById('modalBody');
   body.innerHTML = '';
-
-  // Group by person (same person may appear if they ordered same drink separately)
   drinkOrders.forEach((o, i) => {
-    const initials = o.person.substring(0, 2).toUpperCase();
     const div = document.createElement('div');
     div.className = 'modal-person-row';
     div.style.animationDelay = (i * 0.04) + 's';
     div.innerHTML = `
-      <div class="modal-avatar">${initials}</div>
+      <div class="modal-avatar">${o.person.substring(0, 2).toUpperCase()}</div>
       <div class="modal-person-info">
         <div class="modal-person-name">👤 ${o.person}</div>
         <div class="modal-person-meta">🍬 ${o.sweetness} · ฿${o.price * o.qty}</div>
@@ -1232,31 +1430,18 @@ function openModal(drinkName, drinkOrders) {
     `;
     body.appendChild(div);
   });
-
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
 function closeModalDirect() {
   document.getElementById('modalOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
-
 function closeModal(e) {
-  if (e.target === document.getElementById('modalOverlay')) {
-    closeModalDirect();
-  }
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
 }
 
-// ESC to close modal
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModalDirect();
-  if (e.key === 'Enter' && document.activeElement === document.getElementById('personName')) {
-    addOrder();
-  }
-});
-
-
+// ─── TOAST ───────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1264,6 +1449,12 @@ function showToast(msg) {
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// ─── KEYBOARD ────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('personName')) addOrder();
+});
 
 init();
 </script>
