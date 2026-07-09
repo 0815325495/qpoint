@@ -1,338 +1,1271 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2PS Q-Point Inspection Form</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2canvas for capturing form as image -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Panzoom for image zoom/pan -->
-    <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <!-- Google Fonts: Sarabun -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* Custom styles for the application */
-        body {
-            font-family: 'Sarabun', sans-serif;
-        }
-        /* Custom styling for radio buttons to look like selectable cards */
-        .radio-card input[type="radio"] {
-            display: none;
-        }
-        .radio-card > label {
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .radio-card input[type="radio"]:checked + label {
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .radio-card input[type="radio"][value="ng"]:checked + label {
-            background-color: #fecaca; /* red-200 */
-            border-color: #f87171; /* red-400 */
-        }
-        .radio-card input[type="radio"][value="ok"]:checked + label {
-            background-color: #d1fae5; /* green-200 */
-            border-color: #34d399; /* green-400 */
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧋 ชานมพี่หมี — สั่งน้ำ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6ee;
+    --card: #fff;
+    --brown: #6b3f1e;
+    --brown-light: #a0622d;
+    --amber: #d4a04a;
+    --amber-light: #f2c96a;
+    --cream: #fdf0e0;
+    --text: #3b2009;
+    --muted: #a08060;
+    --border: #e8d5ba;
+    --red: #e55252;
+    --green: #3caa6f;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(107,63,30,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #6b3f1e 0%, #a0622d 60%, #d4a04a 100%);
+    padding: 20px 24px 16px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(107,63,30,0.3);
+  }
+  header h1 {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  header p {
+    color: #f5dba0;
+    font-size: 0.88rem;
+    margin-top: 2px;
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--amber-light);
+    color: var(--brown);
+    font-weight: 800;
+    font-size: 0.78rem;
+    border-radius: 20px;
+    padding: 2px 12px;
+    margin-top: 6px;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px 120px;
+  }
+
+  /* FORM CARD */
+  .form-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--border);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .form-card h2 {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 180px;
+  }
+  .input-group label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--brown);
+    letter-spacing: 0.2px;
+  }
+  .input-group input,
+  .input-group select {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.96rem;
+    color: var(--text);
+    background: var(--cream);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .input-group input:focus,
+  .input-group select:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(212,160,74,0.15);
+    background: #fff;
+  }
+
+  /* MENU GRID */
+  .category-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { border-color: var(--amber); color: var(--brown); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--brown), var(--brown-light));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(107,63,30,0.25);
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .menu-grid::-webkit-scrollbar { width: 4px; }
+  .menu-grid::-webkit-scrollbar-track { background: transparent; }
+  .menu-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .menu-item {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px 10px;
+    cursor: pointer;
+    background: #fff;
+    text-align: center;
+    transition: all 0.18s;
+    position: relative;
+  }
+  .menu-item:hover {
+    border-color: var(--amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(212,160,74,0.18);
+  }
+  .menu-item.selected {
+    border-color: var(--amber);
+    background: linear-gradient(135deg, #fdf0e0, #fff7ec);
+    box-shadow: 0 0 0 2px var(--amber);
+  }
+  .menu-item .emoji { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+  .menu-item .name { font-size: 0.78rem; font-weight: 600; color: var(--brown); line-height: 1.3; }
+  .menu-item .price { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+  .menu-item .check {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 18px; height: 18px;
+    background: var(--amber);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 900;
+  }
+  .menu-item.selected .check { display: flex; }
+
+  .sweetness-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    align-items: center;
+  }
+  .sweetness-row label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--brown);
+    min-width: 80px;
+  }
+  .sweet-btn {
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sweet-btn:hover { border-color: var(--amber); color: var(--brown); }
+  .sweet-btn.active {
+    background: var(--amber);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  /* ADD BUTTON */
+  .btn-add {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px;
+    background: linear-gradient(135deg, #6b3f1e, #a0622d);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(107,63,30,0.3);
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(107,63,30,0.38);
+  }
+  .btn-add:active { transform: translateY(0); }
+
+  /* ORDER LIST */
+  .orders-section { margin-bottom: 20px; }
+  .orders-section h2 {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .order-count-badge {
+    background: var(--amber);
+    color: #fff;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .order-item {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 10px rgba(107,63,30,0.06);
+    animation: slideIn 0.28s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .order-number {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--brown), var(--brown-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .order-detail { flex: 1; min-width: 0; }
+  .order-person {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--brown);
+  }
+  .order-drink {
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-top: 2px;
+  }
+  .order-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .meta-tag {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .order-price {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--brown-light);
+    flex-shrink: 0;
+  }
+
+  .btn-del {
+    width: 32px; height: 32px;
+    border: 1.5px solid #ffd0d0;
+    background: #fff5f5;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--red);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-del:hover {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+    transform: scale(1.12);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .empty-state .big-icon { font-size: 3.5rem; margin-bottom: 12px; display: block; }
+  .empty-state p { font-size: 0.95rem; }
+
+  /* SUMMARY FOOTER */
+  .summary-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    padding: 14px 20px;
+    background: #fff;
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(107,63,30,0.12);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* Fix: stretch full width for fixed */
+  .summary-bar-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: #fff;
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(107,63,30,0.12);
+  }
+  .summary-bar {
+    position: static;
+    box-shadow: none;
+    border: none;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 20px;
+  }
+
+  .summary-stats {
+    flex: 1;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--brown);
+    display: block;
+  }
+  .stat-label { font-size: 0.76rem; color: var(--muted); font-weight: 600; }
+
+  .btn-export {
+    background: linear-gradient(135deg, #3caa6f, #2d8a58);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .btn-export:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(60,170,111,0.3); }
+
+  .btn-clear {
+    background: #fff;
+    color: var(--red);
+    border: 1.5px solid #ffd0d0;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    flex-shrink: 0;
+  }
+  .btn-clear:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    z-index: 999;
+    background: var(--brown);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 280px;
+  }
+  .toast.show { transform: translateX(0); }
+
+  /* MODAL: per-drink summary */
+  .drink-summary {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .drink-summary h2 {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* SUMMARY TABLE */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .summary-table thead tr {
+    background: linear-gradient(135deg, #6b3f1e, #a0622d);
+    color: #fff;
+  }
+  .summary-table thead th {
+    padding: 10px 14px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.3px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .summary-table thead th:nth-child(2) { text-align: center; width: 70px; }
+  .summary-table thead th:first-child { border-radius: 10px 0 0 0; }
+  .summary-table thead th:last-child  { border-radius: 0 10px 0 0; }
+  .summary-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: slideIn 0.22s ease-out both;
+  }
+  .summary-table tbody tr:last-child { border-bottom: none; }
+  .summary-table tbody tr:hover { background: #fff7ec; }
+  .summary-table td { padding: 10px 14px; vertical-align: middle; }
+  .td-drink {
+    font-weight: 700;
+    color: var(--brown);
+    white-space: nowrap;
+    min-width: 120px;
+  }
+  .td-cups { text-align: center; width: 70px; }
+  .cup-badge {
+    display: inline-block;
+    background: var(--amber);
+    color: #fff;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 20px;
+    padding: 1px 11px;
+    min-width: 32px;
+    text-align: center;
+  }
+  .td-names { line-height: 1.7; }
+  .name-chip {
+    display: inline-block;
+    background: var(--cream);
+    border: 1.2px solid var(--border);
+    border-radius: 20px;
+    padding: 1px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--brown);
+    margin: 2px 3px 2px 0;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .name-chip:hover {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #fff;
+    transform: scale(1.07);
+  }
+  .name-chip-multi {
+    background: #fff3e0;
+    border-color: var(--amber-light);
+  }
+  .qty-pill {
+    display: inline-block;
+    background: var(--amber);
+    color: #fff;
+    border-radius: 10px;
+    padding: 0 5px;
+    font-size: 0.68rem;
+    margin-left: 3px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 800;
+    vertical-align: middle;
+  }
+  .tally-hint {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 10px;
+    text-align: right;
+    letter-spacing: 0.2px;
+  }
+
+  /* MODAL OVERLAY */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(59,32,9,0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* MODAL BOX */
+  .modal-box {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(59,32,9,0.22);
+    width: 100%;
+    max-width: 440px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.92) translateY(16px);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .modal-box {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #6b3f1e, #a0622d);
+    padding: 18px 20px 14px;
+    position: relative;
+  }
+  .modal-header h3 {
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.3;
+  }
+  .modal-header .modal-subtitle {
+    font-size: 0.8rem;
+    color: #f5dba0;
+    margin-top: 3px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.32); }
+
+  .modal-body {
+    overflow-y: auto;
+    padding: 16px 20px 20px;
+    flex: 1;
+  }
+  .modal-body::-webkit-scrollbar { width: 4px; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* PERSON ROW IN MODAL */
+  .modal-person-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1.2px solid var(--border);
+    background: var(--cream);
+    margin-bottom: 8px;
+    animation: slideIn 0.2s ease-out both;
+  }
+  .modal-person-row:nth-child(2) { animation-delay: 0.03s; }
+  .modal-person-row:nth-child(3) { animation-delay: 0.06s; }
+  .modal-person-row:nth-child(4) { animation-delay: 0.09s; }
+  .modal-person-row:nth-child(5) { animation-delay: 0.12s; }
+
+  .modal-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber-light), var(--amber));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    font-weight: 800;
+    color: var(--brown);
+    font-family: 'Kanit', sans-serif;
+  }
+  .modal-person-info { flex: 1; min-width: 0; }
+  .modal-person-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--brown);
+  }
+  .modal-person-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .modal-person-qty {
+    background: var(--brown);
+    color: #fff;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 800;
+    font-size: 0.88rem;
+    border-radius: 20px;
+    padding: 2px 10px;
+    flex-shrink: 0;
+  }
+
+  .modal-footer {
+    padding: 12px 20px;
+    border-top: 1.5px solid var(--border);
+    background: var(--cream);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-footer-stat {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .modal-footer-stat strong {
+    color: var(--brown);
+    font-family: 'Kanit', sans-serif;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .menu-grid { grid-template-columns: repeat(3, 1fr); }
+    .summary-stats { gap: 12px; }
+    .stat-num { font-size: 1.25rem; }
+    .btn-export span { display: none; }
+    .modal-box { max-height: 85vh; }
+  }
+</style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <!-- Main form container -->
-    <div id="form-container" class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 md:p-10">
-        <div id="current-date" class="text-right text-sm text-gray-500 mb-2"></div>
-        <form id="qpointForm">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">2PS Q-Point</h1>
-                <p class="text-gray-500 mt-2">จุดสำคัญในการตรวจสอบ ชิ้นงาน</p>
-            </div>
+<header>
+  <div style="font-size:1.8rem;">🧋🐻</div>
+  <h1>ชานมพี่หมี — สั่งน้ำ</h1>
+  <p>Brother Bear Milk Tea · Order System</p>
+  <span class="header-badge">✦ เพิ่มรายชื่อ + เลือกเมนู ✦</span>
+</header>
 
-            <!-- Item Details Section -->
-            <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <div>
-                    <label for="inspectionPoint" class="block text-sm font-medium text-gray-700 mb-1">จุดที่ตรวจสอบ (Inspection Point)</label>
-                    <input type="text" id="inspectionPoint" name="inspectionPoint" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น การประกอบชิ้นส่วน A">
-                </div>
-                <div>
-                    <label for="carModel" class="block text-sm font-medium text-gray-700 mb-1">MODEL รถ</label>
-                    <input type="text" id="carModel" name="carModel" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น YARIS, COROLLA">
-                </div>
-            </div>
+<div class="container">
 
-            <!-- Comparison Section: NG vs OK -->
-            <div class="grid md:grid-cols-2 gap-8 mb-8">
-                <!-- NG (Not Good) Column -->
-                <div class="radio-card">
-                    <input type="radio" id="ng" name="status" value="ng" required>
-                    <label for="ng" class="block p-6 border-2 border-gray-200 rounded-xl text-center">
-                        <h2 class="text-2xl font-bold text-red-600 mb-4">NG (Not Good)</h2>
-                        <div id="ngImageContainer" class="w-full min-h-[12rem] bg-red-50 rounded-lg flex flex-col items-center justify-center p-2 gap-y-2">
-                            <div id="ngPlaceholder" class="text-center text-red-400 p-4">
-                                <svg class="w-16 h-16 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                                <p class="mt-2 text-sm">ไม่มีรูปภาพ NG</p>
-                            </div>
-                        </div>
-                        <input type="file" id="ngImageInput" name="ngImage" accept="image/*" class="hidden">
-                        <button type="button" id="addNgImageBtn" class="mt-4 w-full bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg border border-red-200 hover:bg-red-200 transition-colors">
-                            เพิ่มรูปภาพ NG
-                        </button>
-                        <p class="text-gray-600 mt-4">ลักษณะงานที่ผิดปกติหรือไม่เป็นไปตามมาตรฐาน</p>
-                    </label>
-                </div>
-
-                <!-- OK Column -->
-                <div class="radio-card">
-                    <input type="radio" id="ok" name="status" value="ok" required>
-                    <label for="ok" class="block p-6 border-2 border-gray-200 rounded-xl text-center">
-                        <h2 class="text-2xl font-bold text-green-600 mb-4">OK</h2>
-                        <div id="okImageContainer" class="w-full min-h-[12rem] bg-green-50 rounded-lg flex flex-col items-center justify-center p-2 gap-y-2">
-                             <div id="okPlaceholder" class="text-center text-green-400 p-4">
-                               <svg class="w-16 h-16 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                                <p class="mt-2 text-sm">ไม่มีรูปภาพ OK</p>
-                            </div>
-                        </div>
-                        <input type="file" id="okImageInput" name="okImage" accept="image/*" class="hidden">
-                         <button type="button" id="addOkImageBtn" class="mt-4 w-full bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg border border-green-200 hover:bg-green-200 transition-colors">
-                            เพิ่มรูปภาพ OK
-                        </button>
-                        <p class="text-gray-600 mt-4">ลักษณะงานที่ถูกต้องและเป็นไปตามมาตรฐาน</p>
-                    </label>
-                </div>
-            </div>
-
-            <!-- NG Additional Details Section -->
-            <div class="mb-8 hidden" id="detailsSection">
-                <label for="details" class="block text-sm font-medium text-gray-700 mb-1">คำอธิบายเพิ่มเติม <span class="text-red-500">(โปรดระบุสาเหตุของ NG)</span></label>
-                <textarea id="details" name="details" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" placeholder="อธิบายรายละเอียดของปัญหาที่พบ..."></textarea>
-            </div>
-
-            <!-- OK Additional Details Section -->
-            <div class="mb-8 hidden" id="okDetailsSection">
-                <label for="okDetails" class="block text-sm font-medium text-gray-700 mb-1">คำอธิบายเพิ่มเติม (OK)</label>
-                <textarea id="okDetails" name="okDetails" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
-            </div>
-
-            <!-- Submission Button -->
-            <div class="text-center">
-                <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-10 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">ส่งและบันทึกเป็นรูปภาพ</button>
-            </div>
-        </form>
-
-        <!-- Success Message Modal -->
-        <div id="successMessage" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-8 rounded-lg shadow-xl text-center">
-                <h3 class="text-2xl font-bold text-green-600 mb-4">บันทึกข้อมูลสำเร็จ!</h3>
-                <p>รูปภาพฟอร์มถูกดาวน์โหลดเรียบร้อยแล้ว</p>
-                <button onclick="closeMessage()" class="mt-6 bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">ปิด</button>
-            </div>
-        </div>
+  <!-- ADD ORDER FORM -->
+  <div class="form-card">
+    <h2>📋 เพิ่มออเดอร์</h2>
+    <div class="input-row">
+      <div class="input-group">
+        <label>👤 ชื่อคนสั่ง</label>
+        <input type="text" id="personName" placeholder="ใส่ชื่อ..." maxlength="30">
+      </div>
+      <div class="input-group">
+        <label>📦 จำนวน</label>
+        <input type="number" id="qty" value="1" min="1" max="20" style="max-width:90px;">
+      </div>
     </div>
 
-    <script>
-        // Get references to DOM elements
-        const form = document.getElementById('qpointForm');
-        const formContainer = document.getElementById('form-container');
-        const ngRadio = document.getElementById('ng');
-        const okRadio = document.getElementById('ok');
-        const detailsSection = document.getElementById('detailsSection');
-        const detailsTextarea = document.getElementById('details');
-        const successMessage = document.getElementById('successMessage');
-        const okDetailsSection = document.getElementById('okDetailsSection');
-        const okDetailsTextarea = document.getElementById('okDetails');
+    <!-- CATEGORY TABS -->
+    <div class="category-tabs" id="categoryTabs"></div>
 
-        // New image upload elements
-        const addNgImageBtn = document.getElementById('addNgImageBtn');
-        const addOkImageBtn = document.getElementById('addOkImageBtn');
-        const ngImageInput = document.getElementById('ngImageInput');
-        const okImageInput = document.getElementById('okImageInput');
-        const ngImageContainer = document.getElementById('ngImageContainer');
-        const okImageContainer = document.getElementById('okImageContainer');
-        const ngPlaceholder = document.getElementById('ngPlaceholder');
-        const okPlaceholder = document.getElementById('okPlaceholder');
+    <!-- MENU GRID -->
+    <div class="menu-grid" id="menuGrid"></div>
 
-        // Set the current date
-        const dateElement = document.getElementById('current-date');
-        const today = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        dateElement.textContent = today.toLocaleDateString('th-TH', options);
+    <!-- SWEETNESS -->
+    <div class="sweetness-row">
+      <label>🍬 ความหวาน</label>
+      <button class="sweet-btn" onclick="setSweetness('ไม่หวาน')">ไม่หวาน</button>
+      <button class="sweet-btn" onclick="setSweetness('หวานน้อย')">หวานน้อย</button>
+      <button class="sweet-btn active" onclick="setSweetness('หวานปกติ')">ปกติ</button>
+      <button class="sweet-btn" onclick="setSweetness('หวานมาก')">หวานมาก</button>
+    </div>
 
-        // Function to handle showing/hiding the details section
-        function handleStatusChange() {
-            if (ngRadio.checked) {
-                detailsSection.classList.remove('hidden');
-                detailsTextarea.required = true;
-                okDetailsSection.classList.add('hidden');
-                okDetailsTextarea.required = false;
-            } else if (okRadio.checked) {
-                detailsSection.classList.add('hidden');
-                detailsTextarea.required = false;
-                okDetailsSection.classList.remove('hidden');
-            }
-        }
+    <button class="btn-add" onclick="addOrder()">
+      <span style="font-size:1.1rem">➕</span>
+      เพิ่มออเดอร์
+    </button>
+  </div>
 
-        // Function to add a new image preview with zoom/pan controls
-        function addImagePreview(input, placeholder, container) {
-            const file = input.files[0];
-            if (!file) return;
+  <!-- DRINK SUMMARY TABLE -->
+  <div class="drink-summary" id="drinkSummarySection" style="display:none;">
+    <h2>📊 สรุปเมนูที่สั่ง</h2>
+    <div style="overflow-x:auto; border-radius:10px; border:1.5px solid var(--border);">
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>🧋 เมนู</th>
+            <th>แก้ว</th>
+            <th>👤 รายชื่อ</th>
+          </tr>
+        </thead>
+        <tbody id="drinkTally"></tbody>
+      </table>
+    </div>
+    <p class="tally-hint">👆 แตะชิปชื่อเพื่อดูรายละเอียด</p>
+  </div>
 
-            placeholder.classList.add('hidden');
+  <!-- ORDER LIST -->
+  <div class="orders-section">
+    <h2>
+      🧾 รายการออเดอร์
+      <span class="order-count-badge" id="orderCountBadge">0</span>
+    </h2>
+    <div class="order-list" id="orderList">
+      <div class="empty-state">
+        <span class="big-icon">🧋</span>
+        <p>ยังไม่มีออเดอร์<br>เพิ่มรายชื่อและเลือกเมนูด้านบนเลย!</p>
+      </div>
+    </div>
+  </div>
 
-            const reader = new FileReader();
+</div>
 
-            reader.onload = function(e) {
-                const previewWrapper = document.createElement('div');
-                previewWrapper.className = 'relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200 shadow-sm';
+<!-- SUMMARY BAR -->
+<div class="summary-bar-wrap">
+  <div class="summary-bar">
+    <div class="summary-stats">
+      <div class="stat-item">
+        <span class="stat-num" id="totalOrders">0</span>
+        <span class="stat-label">รายการ</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="totalCups">0</span>
+        <span class="stat-label">แก้ว</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="totalPrice">฿0</span>
+        <span class="stat-label">รวมทั้งหมด</span>
+      </div>
+    </div>
+    <button class="btn-export" onclick="exportOrders()">📋 <span>ส่งออก</span></button>
+    <button class="btn-clear" onclick="clearAll()">🗑️</button>
+  </div>
+</div>
 
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.ondragstart = () => false; // Prevent native image dragging
-                img.className = 'w-full h-full object-contain bg-white cursor-grab';
+<!-- DRINK DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle">🧋 ชานมมะลิ</h3>
+      <div class="modal-subtitle" id="modalSubtitle">รายชื่อที่สั่ง</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <div class="modal-footer-stat">รวม <strong id="modalTotalCups">0</strong> แก้ว</div>
+      <div class="modal-footer-stat">฿<strong id="modalTotalPrice">0</strong></div>
+    </div>
+  </div>
+</div>
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.type = 'button';
-                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
-                deleteBtn.className = 'delete-image-btn absolute top-1.5 right-1.5 bg-black bg-opacity-50 text-white rounded-full p-0.5 hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-white z-10';
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-                const controlsWrapper = document.createElement('div');
-                controlsWrapper.className = 'image-controls absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 rounded-full p-1 flex items-center gap-x-1 text-white text-xs z-10';
-                controlsWrapper.innerHTML = `
-                    <button type="button" class="zoom-in-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="ซูมเข้า">+</button>
-                    <button type="button" class="zoom-out-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="ซูมออก">-</button>
-                    <button type="button" class="reset-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors" title="รีเซ็ต">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-4.13M20 15a9 9 0 01-14.13 4.13"></path></svg>
-                    </button>
-                `;
+<script>
+// ===== MENU DATA =====
+const MENU = {
+  '🍵 ชานม': [
+    { name: 'ชานมไต้หวัน', price: 20 },
+    { name: 'ชาไทย', price: 20 },
+    { name: 'ชาเขียวนม', price: 20 },
+    { name: 'ชานมมะลิ', price: 20 },
+    { name: 'ชาโกโก้', price: 20 },
+  ],
+  '🥛 นมสด': [
+    { name: 'โอวัลติน', price: 20 },
+    { name: 'นมชมพู', price: 20 },
+    { name: 'นมสด', price: 20 },
+    { name: 'นมเผือก', price: 20 },
+    { name: 'นมกล้วย', price: 20 },
+    { name: 'นมแคนตาลูป', price: 20 },
+    { name: 'นมคาราเมล', price: 25 },
+    { name: 'นมน้ำผึ้ง', price: 25 },
+    { name: 'บลูเบอร์รี่นมสด', price: 25 },
+    { name: 'สตรอเบอร์รี่นมสด', price: 25 },
+    { name: 'เนสกาแฟ', price: 25 },
+    { name: 'โกโก้', price: 25 },
+    { name: 'โกโก้กล้วย', price: 25 },
+  ],
+  '🍃 ชาใส': [
+    { name: 'ชาดำ', price: 20 },
+    { name: 'ชามะนาว', price: 20 },
+    { name: 'ชาเขียวใส', price: 20 },
+    { name: 'ชาเขียวน้ำผึ้งมะนาว', price: 20 },
+    { name: 'ชาเขียวมะนาว', price: 20 },
+    { name: 'ชาเขียวแอปเปิ้ล', price: 20 },
+    { name: 'ชาเขียวเสาวรส', price: 20 },
+    { name: 'ชามะลิ', price: 20 },
+    { name: 'ชามะลิน้ำผึ้ง', price: 20 },
+    { name: 'ชามะลิลิ้นจี่', price: 20 },
+    { name: 'ชามะลิสตรอเบอร์รี่', price: 20 },
+    { name: 'ชามะลิแอปเปิ้ล', price: 20 },
+    { name: 'ชามะลิกีวี', price: 20 },
+    { name: 'ชามะลิแคนตาลูป', price: 20 },
+    { name: 'ชาพีช', price: 20 },
+  ],
+  '🫧 โซดา': [
+    { name: 'แดงโซดา', price: 20 },
+    { name: 'เขียวโซดา', price: 20 },
+    { name: 'แดงมะนาวโซดา', price: 20 },
+    { name: 'เขียวมะนาวโซดา', price: 20 },
+    { name: 'มะนาวโซดา', price: 20 },
+    { name: 'น้ำผึ้งมะนาวโซดา', price: 20 },
+    { name: 'เสาวรสโซดา', price: 20 },
+    { name: 'สตรอเบอร์รี่โซดา', price: 20 },
+    { name: 'บลูเบอร์รี่โซดา', price: 20 },
+    { name: 'องุ่นโซดา', price: 20 },
+    { name: 'กีวีโซดา', price: 20 },
+    { name: 'แอปเปิ้ลโซดา', price: 20 },
+    { name: 'ลิ้นจี่โซดา', price: 20 },
+    { name: 'แคนตาลูปโซดา', price: 20 },
+    { name: 'บลูฮาวายโซดา', price: 20 },
+  ],
+  '🤎 บราวน์ชูการ์': [
+    { name: 'ชานมไต้หวันบราวน์ชูการ์', price: 25 },
+    { name: 'ชาเขียวบราวน์ชูการ์', price: 25 },
+    { name: 'ชาไทยบราวน์ชูการ์', price: 25 },
+    { name: 'นมสดบราวน์ชูการ์', price: 25 },
+  ],
+  '🫐 บ๊วย': [
+    { name: 'น้ำบ๊วย', price: 20 },
+    { name: 'บ๊วยมะนาว', price: 20 },
+    { name: 'บ๊วยน้ำผึ้ง', price: 20 },
+    { name: 'ชาแดงบ๊วย', price: 20 },
+    { name: 'ชาเขียวบ๊วย', price: 20 },
+    { name: 'บ๊วยโซดา', price: 20 },
+    { name: 'บ๊วยมะนาวโซดา', price: 20 },
+    { name: 'บ๊วยน้ำผึ้งโซดา', price: 20 },
+    { name: 'บ๊วยแดงโซดา', price: 20 },
+    { name: 'บ๊วยแดงมะนาวโซดา', price: 20 },
+    { name: 'บ๊วยฮาวายโซดา', price: 20 },
+  ],
+  '☕ กาแฟ': [
+    { name: 'อเมริกาโน', price: 20 },
+    { name: 'อเมริกาโนน้ำผึ้ง', price: 20 },
+    { name: 'เอสเปรสโซ่', price: 25 },
+    { name: 'คาปูชิโน', price: 25 },
+    { name: 'ลาเต้', price: 25 },
+    { name: 'มอคค่า', price: 25 },
+  ],
+};
 
-                deleteBtn.addEventListener('click', () => {
-                    container.removeChild(previewWrapper);
-                    if (container.children.length <= 1) { // 1 is the placeholder
-                        placeholder.classList.remove('hidden');
-                    }
-                });
+let selectedCategory = Object.keys(MENU)[0];
+let selectedDrink = null;
+let sweetness = 'หวานปกติ';
+let orders = [];
+let tallyOrders = {}; // global: drink name -> orders[], for chip onclick
 
-                previewWrapper.appendChild(img);
-                previewWrapper.appendChild(deleteBtn);
-                previewWrapper.appendChild(controlsWrapper);
-                container.appendChild(previewWrapper);
-                
-                // Initialize Panzoom
-                const panzoom = Panzoom(img, {
-                    maxScale: 10,
-                    minScale: 0.5,
-                    contain: 'outside',
-                    canvas: true,
-                });
+// ===== INIT =====
+function init() {
+  renderCategoryTabs();
+  renderMenuGrid();
+}
 
-                // Zoom with wheel
-                previewWrapper.addEventListener('wheel', panzoom.zoomWithWheel, { passive: false });
+function renderCategoryTabs() {
+  const container = document.getElementById('categoryTabs');
+  container.innerHTML = '';
+  Object.keys(MENU).forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (cat === selectedCategory ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => { selectedCategory = cat; selectedDrink = null; renderCategoryTabs(); renderMenuGrid(); };
+    container.appendChild(btn);
+  });
+}
 
-                // Hook up buttons
-                const zoomInBtn = controlsWrapper.querySelector('.zoom-in-btn');
-                const zoomOutBtn = controlsWrapper.querySelector('.zoom-out-btn');
-                const resetBtn = controlsWrapper.querySelector('.reset-btn');
+function renderMenuGrid() {
+  const container = document.getElementById('menuGrid');
+  container.innerHTML = '';
+  const items = MENU[selectedCategory];
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'menu-item' + (selectedDrink === item.name ? ' selected' : '');
+    const catEmoji = selectedCategory.split(' ')[0];
+    div.innerHTML = `
+      <span class="emoji">${catEmoji}</span>
+      <div class="name">${item.name}</div>
+      <div class="price">฿${item.price}</div>
+      <div class="check">✓</div>
+    `;
+    div.onclick = () => {
+      selectedDrink = item.name;
+      renderMenuGrid();
+    };
+    container.appendChild(div);
+  });
+}
 
-                zoomInBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.zoomIn(); });
-                zoomOutBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.zoomOut(); });
-                resetBtn.addEventListener('click', (e) => { e.stopPropagation(); panzoom.reset(); });
-            };
+function setSweetness(level) {
+  sweetness = level;
+  document.querySelectorAll('.sweet-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === level);
+  });
+}
 
-            reader.readAsDataURL(file);
-            input.value = ''; // Reset input to allow selecting the same file again
-        }
-        
-        // Add event listeners
-        ngRadio.addEventListener('change', handleStatusChange);
-        okRadio.addEventListener('change', handleStatusChange);
-        addNgImageBtn.addEventListener('click', () => ngImageInput.click());
-        addOkImageBtn.addEventListener('click', () => okImageInput.click());
-        ngImageInput.addEventListener('change', (e) => addImagePreview(e.target, ngPlaceholder, ngImageContainer));
-        okImageInput.addEventListener('change', (e) => addImagePreview(e.target, okPlaceholder, okImageContainer));
+function getPrice(name) {
+  for (const cat of Object.values(MENU)) {
+    const found = cat.find(i => i.name === name);
+    if (found) return found.price;
+  }
+  return 20;
+}
 
-        // Handle form submission
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const ngDesc = detailsTextarea.value;
-            const okDesc = okDetailsTextarea.value;
-            const ngCardLabel = document.querySelector('label[for="ng"]');
-            const okCardLabel = document.querySelector('label[for="ok"]');
-            const submitButton = event.submitter;
-            let ngDescElement = null, okDescElement = null;
+// ===== ADD ORDER =====
+function addOrder() {
+  const name = document.getElementById('personName').value.trim();
+  const qty = parseInt(document.getElementById('qty').value) || 1;
 
-            if (ngDesc.trim() !== '') {
-                ngDescElement = document.createElement('div');
-                ngDescElement.className = 'mt-4 p-3 bg-red-100 border border-red-200 rounded-lg text-left text-sm text-gray-800 whitespace-pre-wrap';
-                ngDescElement.textContent = `คำอธิบาย NG:\n${ngDesc}`;
-                ngCardLabel.appendChild(ngDescElement);
-            }
-            if (okDesc.trim() !== '') {
-                okDescElement = document.createElement('div');
-                okDescElement.className = 'mt-4 p-3 bg-green-100 border border-green-200 rounded-lg text-left text-sm text-gray-800 whitespace-pre-wrap';
-                okDescElement.textContent = `คำอธิบาย OK:\n${okDesc}`;
-                okCardLabel.appendChild(okDescElement);
-            }
-            
-            detailsSection.classList.add('hidden');
-            okDetailsSection.classList.add('hidden');
-            submitButton.classList.add('hidden');
-            addNgImageBtn.classList.add('hidden');
-            addOkImageBtn.classList.add('hidden');
+  if (!name) { showToast('⚠️ กรุณาใส่ชื่อก่อนนะ!'); return; }
+  if (!selectedDrink) { showToast('⚠️ กรุณาเลือกเมนูที่ต้องการ!'); return; }
 
-            const allImageControls = document.querySelectorAll('.delete-image-btn, .image-controls');
-            allImageControls.forEach(el => el.classList.add('hidden'));
+  orders.push({
+    id: Date.now(),
+    person: name,
+    drink: selectedDrink,
+    price: getPrice(selectedDrink),
+    qty,
+    sweetness,
+    category: selectedCategory,
+  });
 
-            ngCardLabel.classList.add('bg-red-200', 'border-red-400');
-            okCardLabel.classList.add('bg-green-200', 'border-green-400');
+  document.getElementById('personName').value = '';
+  document.getElementById('qty').value = 1;
+  selectedDrink = null;
+  renderMenuGrid();
+  renderOrders();
+  updateSummary();
+  showToast(`✅ เพิ่มออเดอร์ของ ${name} แล้ว!`);
+}
 
-            setTimeout(() => {
-                html2canvas(formContainer, { scale: 2, useCORS: true }).then(canvas => {
-                    const link = document.createElement('a');
-                    const date = new Date();
-                    const filename = `2PS-Q-Point_${date.toISOString().slice(0,10)}_${date.toTimeString().slice(0,8).replace(/:/g,'-')}.png`;
-                    link.download = filename;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click(); 
-                    successMessage.classList.remove('hidden');
+// ===== RENDER ORDERS =====
+function renderOrders() {
+  const container = document.getElementById('orderList');
+  if (orders.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span class="big-icon">🧋</span><p>ยังไม่มีออเดอร์<br>เพิ่มรายชื่อและเลือกเมนูด้านบนเลย!</p></div>`;
+    document.getElementById('drinkSummarySection').style.display = 'none';
+    return;
+  }
 
-                    setTimeout(() => {
-                        form.reset();
-                        handleStatusChange();
-                        // Reset image containers
-                        while (ngImageContainer.children.length > 1) {
-                            ngImageContainer.removeChild(ngImageContainer.lastChild);
-                        }
-                        ngPlaceholder.classList.remove('hidden');
-                        while (okImageContainer.children.length > 1) {
-                            okImageContainer.removeChild(okImageContainer.lastChild);
-                        }
-                        okPlaceholder.classList.remove('hidden');
-                    }, 500);
-                }).catch(err => {
-                    console.error('oops, something went wrong!', err);
-                    alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ!');
-                }).finally(() => {
-                    if (ngDescElement) ngDescElement.remove();
-                    if (okDescElement) okDescElement.remove();
-                    submitButton.classList.remove('hidden');
-                    addNgImageBtn.classList.remove('hidden');
-                    addOkImageBtn.classList.remove('hidden');
-                    allImageControls.forEach(el => el.classList.remove('hidden'));
-                    ngCardLabel.classList.remove('bg-red-200', 'border-red-400');
-                    okCardLabel.classList.remove('bg-green-200', 'border-green-400');
-                });
-            }, 100);
-        });
+  container.innerHTML = '';
+  orders.forEach((o, idx) => {
+    const div = document.createElement('div');
+    div.className = 'order-item';
+    div.innerHTML = `
+      <div class="order-number">${idx + 1}</div>
+      <div class="order-detail">
+        <div class="order-person">👤 ${o.person}</div>
+        <div class="order-drink">${o.category.split(' ')[0]} ${o.drink}</div>
+        <div class="order-meta">
+          <span class="meta-tag">🍬 ${o.sweetness}</span>
+          <span class="meta-tag">×${o.qty} แก้ว</span>
+        </div>
+      </div>
+      <div class="order-price">฿${o.price * o.qty}</div>
+      <button class="btn-del" onclick="deleteOrder(${o.id})">✕</button>
+    `;
+    container.appendChild(div);
+  });
 
-        function closeMessage() {
-            successMessage.classList.add('hidden');
-        }
-    </script>
+  // Drink tally — table rows with name chips
+  tallyOrders = {};
+  const tally = {};
+  orders.forEach(o => {
+    const key = o.drink;
+    tally[key] = (tally[key] || 0) + o.qty;
+    if (!tallyOrders[key]) tallyOrders[key] = [];
+    tallyOrders[key].push(o);
+  });
+  const tallyEl = document.getElementById('drinkTally');
+  tallyEl.innerHTML = '';
+  Object.entries(tally).sort((a,b) => b[1]-a[1]).forEach(([name, count], rowIdx) => {
+    const drinkOrders = tallyOrders[name];
+    // Group by person
+    const personMap = {};
+    drinkOrders.forEach(o => {
+      personMap[o.person] = (personMap[o.person] || 0) + o.qty;
+    });
+    const chipsHtml = Object.entries(personMap).map(([person, qty]) => {
+      const isMulti = qty > 1;
+      const multiClass = isMulti ? ' name-chip-multi' : '';
+      const qtyPill = isMulti ? `<span class="qty-pill">×${qty}</span>` : '';
+      return `<span class="name-chip${multiClass}" data-drink="${name}" title="${person} · ${qty} แก้ว">${person}${qtyPill}</span>`;
+    }).join('');
 
+    const tr = document.createElement('tr');
+    tr.style.animationDelay = (rowIdx * 0.05) + 's';
+    tr.innerHTML = `
+      <td class="td-drink">🧋 ${name}</td>
+      <td class="td-cups"><span class="cup-badge">${count}</span></td>
+      <td class="td-names">${chipsHtml}</td>
+    `;
+    // attach click on each chip via event delegation on tr
+    tr.querySelectorAll('.name-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const dk = chip.dataset.drink;
+        if (tallyOrders[dk]) openModal(dk, tallyOrders[dk]);
+      });
+    });
+    tallyEl.appendChild(tr);
+  });
+  document.getElementById('drinkSummarySection').style.display = 'block';
+}
+
+function deleteOrder(id) {
+  orders = orders.filter(o => o.id !== id);
+  renderOrders();
+  updateSummary();
+  showToast('🗑️ ลบออเดอร์แล้ว');
+}
+
+function updateSummary() {
+  const totalOrders = orders.length;
+  const totalCups = orders.reduce((s, o) => s + o.qty, 0);
+  const totalPrice = orders.reduce((s, o) => s + o.price * o.qty, 0);
+  document.getElementById('totalOrders').textContent = totalOrders;
+  document.getElementById('totalCups').textContent = totalCups;
+  document.getElementById('totalPrice').textContent = '฿' + totalPrice.toLocaleString();
+  document.getElementById('orderCountBadge').textContent = totalOrders;
+}
+
+function clearAll() {
+  if (orders.length === 0) return;
+  if (!confirm('ล้างออเดอร์ทั้งหมด?')) return;
+  orders = [];
+  renderOrders();
+  updateSummary();
+  showToast('🧹 ล้างออเดอร์ทั้งหมดแล้ว');
+}
+
+// ===== EXPORT =====
+function exportOrders() {
+  if (orders.length === 0) { showToast('⚠️ ยังไม่มีออเดอร์'); return; }
+
+  const totalCups = orders.reduce((s, o) => s + o.qty, 0);
+  const totalPrice = orders.reduce((s, o) => s + o.price * o.qty, 0);
+  const now = new Date().toLocaleString('th-TH');
+
+  // Tally
+  const tally = {};
+  orders.forEach(o => { tally[o.drink] = (tally[o.drink] || 0) + o.qty; });
+
+  let text = `🧋 ชานมพี่หมี — รายการสั่งน้ำ\n`;
+  text += `📅 ${now}\n`;
+  text += `${'─'.repeat(36)}\n\n`;
+  text += `📋 รายการออเดอร์:\n`;
+  orders.forEach((o, i) => {
+    text += `${i+1}. ${o.person} — ${o.drink} (${o.sweetness}) ×${o.qty} = ฿${o.price * o.qty}\n`;
+  });
+  text += `\n${'─'.repeat(36)}\n`;
+  text += `📊 สรุปเมนูที่สั่ง:\n`;
+  Object.entries(tally).sort((a,b)=>b[1]-a[1]).forEach(([name, cnt]) => {
+    text += `• ${name}: ${cnt} แก้ว\n`;
+  });
+  text += `\n${'─'.repeat(36)}\n`;
+  text += `👥 จำนวน: ${orders.length} คน | 🧋 รวม: ${totalCups} แก้ว\n`;
+  text += `💰 ยอดรวม: ฿${totalPrice.toLocaleString()}\n`;
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📋 คัดลอกรายการแล้ว!');
+  }).catch(() => {
+    // fallback: download
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'order-drinks.txt';
+    a.click();
+  });
+}
+
+// ===== MODAL =====
+function openModal(drinkName, drinkOrders) {
+  const totalCups = drinkOrders.reduce((s, o) => s + o.qty, 0);
+  const totalPrice = drinkOrders.reduce((s, o) => s + o.price * o.qty, 0);
+
+  document.getElementById('modalTitle').textContent = '🧋 ' + drinkName;
+  document.getElementById('modalSubtitle').textContent = `${drinkOrders.length} คนสั่ง · ${totalCups} แก้ว`;
+  document.getElementById('modalTotalCups').textContent = totalCups;
+  document.getElementById('modalTotalPrice').textContent = totalPrice.toLocaleString();
+
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+
+  // Group by person (same person may appear if they ordered same drink separately)
+  drinkOrders.forEach((o, i) => {
+    const initials = o.person.substring(0, 2).toUpperCase();
+    const div = document.createElement('div');
+    div.className = 'modal-person-row';
+    div.style.animationDelay = (i * 0.04) + 's';
+    div.innerHTML = `
+      <div class="modal-avatar">${initials}</div>
+      <div class="modal-person-info">
+        <div class="modal-person-name">👤 ${o.person}</div>
+        <div class="modal-person-meta">🍬 ${o.sweetness} · ฿${o.price * o.qty}</div>
+      </div>
+      <div class="modal-person-qty">×${o.qty}</div>
+    `;
+    body.appendChild(div);
+  });
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    closeModalDirect();
+  }
+}
+
+// ESC to close modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('personName')) {
+    addOrder();
+  }
+});
+
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
 </body>
 </html>
-
