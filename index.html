@@ -104,6 +104,10 @@ header p{color:#f5dba0;font-size:0.85rem;margin-top:2px}
 .name-chip-multi{background:#fff3e0;border-color:var(--amber-light)}
 .qty-pill{display:inline-block;background:var(--amber);color:#fff;border-radius:9px;padding:0 5px;font-size:0.67rem;margin-left:3px;font-family:'Kanit',sans-serif;font-weight:800;vertical-align:middle}
 .tally-hint{font-size:0.67rem;color:var(--muted);margin-top:8px;text-align:right}
+.th-num{text-align:center!important;width:58px;font-size:0.74rem!important;padding:9px 6px!important;white-space:nowrap}
+.td-num{text-align:center;width:58px;vertical-align:middle}
+.td-zero{color:#ccc;font-size:0.8rem}
+.num-badge{display:inline-block;background:linear-gradient(135deg,var(--brown),var(--brown-light));color:#fff;font-family:'Kanit',sans-serif;font-weight:800;font-size:0.9rem;border-radius:20px;padding:1px 10px;min-width:28px;text-align:center}
 
 /* ORDER LIST */
 .orders-section{margin-bottom:18px}
@@ -245,6 +249,12 @@ header p{color:#f5dba0;font-size:0.85rem;margin-top:2px}
       <button class="sweet-btn active" onclick="setSweetness('หวานปกติ')">ปกติ</button>
       <button class="sweet-btn" onclick="setSweetness('หวานมาก')">หวานมาก</button>
     </div>
+    <div class="sweetness-row" style="margin-top:10px">
+      <label>🧆 ไข่มุก</label>
+      <button class="sweet-btn active" onclick="setTopping('ไข่มุกหมี')">🖤 ไข่มุกหมี</button>
+      <button class="sweet-btn" onclick="setTopping('ไข่มุกลาวา')">🤎 ไข่มุกลาวา</button>
+      <button class="sweet-btn" onclick="setTopping('ไม่ใส่')">ไม่ใส่</button>
+    </div>
     <button class="btn-add" id="btnAdd" onclick="addOrder()">
       <span style="font-size:1.05rem">➕</span> เพิ่มออเดอร์
     </button>
@@ -258,7 +268,14 @@ header p{color:#f5dba0;font-size:0.85rem;margin-top:2px}
         <thead>
           <tr>
             <th>🧋 เมนู</th>
-            <th>แก้ว</th>
+            <th class="th-num">แก้ว</th>
+            <th class="th-num">ไม่หวาน</th>
+            <th class="th-num">หวานน้อย</th>
+            <th class="th-num">ปกติ</th>
+            <th class="th-num">หวานมาก</th>
+            <th class="th-num">🖤หมี</th>
+            <th class="th-num">🤎ลาวา</th>
+            <th class="th-num">ไม่ใส่</th>
             <th>👤 รายชื่อ</th>
           </tr>
         </thead>
@@ -477,6 +494,7 @@ const MENU = {
 let selectedCategory = Object.keys(MENU)[0];
 let selectedDrink    = null;
 let sweetness        = 'หวานปกติ';
+let topping          = 'ไข่มุกหมี';
 let orders           = [];
 let tallyOrders      = {};
 
@@ -551,6 +569,13 @@ function setSweetness(level) {
   document.querySelectorAll('.sweet-btn').forEach(b => b.classList.toggle('active', b.textContent === level));
 }
 
+function setTopping(val) {
+  topping = val;
+  // highlight only topping buttons (2nd sweetness-row)
+  const rows = document.querySelectorAll('.sweetness-row');
+  if (rows[1]) rows[1].querySelectorAll('.sweet-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === val));
+}
+
 function getPrice(name) {
   for (const cat of Object.values(MENU)) {
     const f = cat.find(i => i.name === name);
@@ -579,6 +604,7 @@ async function addOrder() {
       price:     getPrice(selectedDrink),
       qty,
       sweetness,
+      topping,
       category:  selectedCategory,
       createdAt: Date.now()
     });
@@ -622,6 +648,7 @@ function renderOrders() {
         <div class="order-drink">${(o.category||'').split(' ')[0]} ${o.drink}</div>
         <div class="order-meta">
           <span class="meta-tag">🍬 ${o.sweetness}</span>
+          <span class="meta-tag">🧆 ${o.topping || 'ไข่มุกหมี'}</span>
           <span class="meta-tag">×${o.qty} แก้ว</span>
         </div>
       </div>
@@ -643,18 +670,45 @@ function renderOrders() {
   const tEl = document.getElementById('drinkTally');
   tEl.innerHTML = '';
   Object.entries(tally).sort((a,b) => b[1]-a[1]).forEach(([name, count], ri) => {
+    const drinkList = tallyOrders[name];
+
+    // นับความหวาน (คิดตาม qty)
+    const sw = { 'ไม่หวาน':0, 'หวานน้อย':0, 'หวานปกติ':0, 'หวานมาก':0 };
+    // นับไข่มุก
+    const tp = { 'ไข่มุกหมี':0, 'ไข่มุกลาวา':0, 'ไม่ใส่':0 };
+
+    drinkList.forEach(o => {
+      const s = o.sweetness || 'หวานปกติ';
+      const t = o.topping   || 'ไข่มุกหมี';
+      if (sw[s] !== undefined) sw[s] += o.qty; else sw['หวานปกติ'] += o.qty;
+      if (tp[t] !== undefined) tp[t] += o.qty; else tp['ไข่มุกหมี'] += o.qty;
+    });
+
+    // ชิปรายชื่อ (คลิกดู modal)
     const personMap = {};
-    tallyOrders[name].forEach(o => { personMap[o.person] = (personMap[o.person]||0) + o.qty; });
+    drinkList.forEach(o => { personMap[o.person] = (personMap[o.person]||0) + o.qty; });
     const chips = Object.entries(personMap).map(([person, qty]) => {
       const multi = qty > 1;
       const pill  = multi ? `<span class="qty-pill">×${qty}</span>` : '';
       return `<span class="name-chip${multi?' name-chip-multi':''}" data-drink="${name}">${person}${pill}</span>`;
     }).join('');
+
+    const cell = (n) => n > 0
+      ? `<td class="td-num"><span class="num-badge">${n}</span></td>`
+      : `<td class="td-num td-zero">—</td>`;
+
     const tr = document.createElement('tr');
     tr.style.animationDelay = ri * 0.04 + 's';
     tr.innerHTML = `
       <td class="td-drink">🧋 ${name}</td>
       <td class="td-cups"><span class="cup-badge">${count}</span></td>
+      ${cell(sw['ไม่หวาน'])}
+      ${cell(sw['หวานน้อย'])}
+      ${cell(sw['หวานปกติ'])}
+      ${cell(sw['หวานมาก'])}
+      ${cell(tp['ไข่มุกหมี'])}
+      ${cell(tp['ไข่มุกลาวา'])}
+      ${cell(tp['ไม่ใส่'])}
       <td class="td-names">${chips}</td>`;
     tr.querySelectorAll('.name-chip').forEach(chip =>
       chip.addEventListener('click', () => openModal(chip.dataset.drink, tallyOrders[chip.dataset.drink]))
@@ -786,7 +840,7 @@ function exportOrders() {
   const tally = {};
   orders.forEach(o => { tally[o.drink]=(tally[o.drink]||0)+o.qty; });
   let t = `🧋 ชานมพี่หมี — รายการสั่งน้ำ\n📅 ${new Date().toLocaleString('th-TH')}\n${'─'.repeat(36)}\n\n📋 รายการออเดอร์:\n`;
-  orders.forEach((o,i) => { t += `${i+1}. ${o.person} — ${o.drink} (${o.sweetness}) ×${o.qty} = ฿${o.price*o.qty}\n`; });
+  orders.forEach((o,i) => { t += `${i+1}. ${o.person} — ${o.drink} (${o.sweetness}, ${o.topping||'ไข่มุกหมี'}) ×${o.qty} = ฿${o.price*o.qty}\n`; });
   t += `\n${'─'.repeat(36)}\n📊 สรุปเมนูที่สั่ง:\n`;
   Object.entries(tally).sort((a,b)=>b[1]-a[1]).forEach(([n,c]) => { t += `• ${n}: ${c} แก้ว\n`; });
   t += `\n${'─'.repeat(36)}\n👥 ${orders.length} คน | 🧋 ${cups} แก้ว | 💰 ฿${price.toLocaleString()}\n`;
@@ -816,7 +870,7 @@ function openModal(drinkName, drinkOrders) {
       <div class="modal-avatar">${o.person.substring(0,2).toUpperCase()}</div>
       <div class="modal-person-info">
         <div class="modal-person-name">👤 ${o.person}</div>
-        <div class="modal-person-meta">🍬 ${o.sweetness} · ฿${o.price*o.qty}</div>
+        <div class="modal-person-meta">🍬 ${o.sweetness} · 🧆 ${o.topping||'ไข่มุกหมี'} · ฿${o.price*o.qty}</div>
       </div>
       <div class="modal-person-qty">×${o.qty}</div>`;
     body.appendChild(d);
