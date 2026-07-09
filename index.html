@@ -172,6 +172,33 @@ header p{color:#f5dba0;font-size:0.85rem;margin-top:2px}
   .stat-num{font-size:1.2rem}
   .btn-export span{display:none}
 }
+
+/* PIN MODAL */
+.pin-overlay{position:fixed;inset:0;z-index:600;background:rgba(59,32,9,0.5);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.pin-overlay.open{opacity:1;pointer-events:all}
+.pin-box{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(59,32,9,0.25);width:100%;max-width:320px;overflow:hidden;transform:scale(0.88) translateY(18px);transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1)}
+.pin-overlay.open .pin-box{transform:scale(1) translateY(0)}
+.pin-header{background:linear-gradient(135deg,#6b3f1e,#a0622d);padding:18px 20px 15px;text-align:center}
+.pin-header h3{font-family:'Kanit',sans-serif;font-size:1.05rem;font-weight:800;color:#fff}
+.pin-header p{font-size:0.78rem;color:#f5dba0;margin-top:3px}
+.pin-body{padding:20px}
+/* dots display */
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:18px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:#fff;transition:all 0.15s}
+.pin-dot.filled{background:var(--amber);border-color:var(--amber);transform:scale(1.15)}
+.pin-dot.error{background:var(--red);border-color:var(--red);animation:shake 0.35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+/* numpad */
+.pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.pin-key{border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:13px 0;font-family:'Kanit',sans-serif;font-size:1.2rem;font-weight:700;color:var(--brown);cursor:pointer;transition:all 0.12s;text-align:center;user-select:none}
+.pin-key:hover{background:var(--cream);border-color:var(--amber);transform:scale(1.06)}
+.pin-key:active{transform:scale(0.95)}
+.pin-key.del{font-size:1rem;color:var(--muted)}
+.pin-key.del:hover{background:#fff5f5;border-color:var(--red);color:var(--red)}
+.pin-key.zero{grid-column:2}
+.pin-err{text-align:center;color:var(--red);font-size:0.82rem;font-weight:600;margin-top:10px;min-height:18px}
+.pin-cancel{display:block;width:100%;margin-top:10px;padding:9px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:'Kanit',sans-serif;font-size:0.9rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all 0.13s}
+.pin-cancel:hover{background:var(--cream);color:var(--brown)}
 </style>
 </head>
 <body>
@@ -288,6 +315,41 @@ header p{color:#f5dba0;font-size:0.85rem;margin-top:2px}
     <div class="modal-footer">
       <div class="modal-footer-stat">รวม <strong id="modalTotalCups">0</strong> แก้ว</div>
       <div class="modal-footer-stat">฿<strong id="modalTotalPrice">0</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-header">
+      <h3>🔐 ยืนยัน PIN แอดมิน</h3>
+      <p id="pinActionLabel">กรอก PIN เพื่อดำเนินการ</p>
+    </div>
+    <div class="pin-body">
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+        <div class="pin-dot" id="pd4"></div>
+        <div class="pin-dot" id="pd5"></div>
+      </div>
+      <div class="pin-numpad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key del" onclick="pinDel()">⌫</button>
+        <button class="pin-key zero" onclick="pinKey('0')">0</button>
+      </div>
+      <div class="pin-err" id="pinErr"></div>
+      <button class="pin-cancel" onclick="closePinModal()">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -564,8 +626,8 @@ function renderOrders() {
         </div>
       </div>
       <div class="order-price">฿${o.price * o.qty}</div>
-      <button class="btn-del">✕</button>`;
-    div.querySelector('.btn-del').onclick = () => deleteOrder(o.fbKey);
+      <button class="btn-del" title="ลบออเดอร์ (ต้องใช้ PIN)">✕</button>`;
+    div.querySelector('.btn-del').onclick = () => askPin('delete', o.fbKey, o.person);
     c.appendChild(div);
   });
 
@@ -618,13 +680,89 @@ async function deleteOrder(key) {
 
 async function clearAll() {
   if (orders.length === 0) return;
-  if (!confirm('ล้างออเดอร์ทั้งหมด?')) return;
+  askPin('clearAll', null, null);
+}
+
+async function doClearAll() {
   try {
     await FB.clear();
     showToast('🧹 ล้างออเดอร์ทั้งหมดแล้ว');
     await syncFromFirebase();
   } catch (e) {
     showToast('❌ ล้างไม่สำเร็จ: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  PIN MODAL
+// ════════════════════════════════════════════════════════════
+const ADMIN_PIN = '888888';
+let _pinBuffer   = '';
+let _pinAction   = null;   // 'delete' | 'clearAll'
+let _pinPayload  = null;   // fbKey หรือ null
+let _pinAttempts = 0;
+
+function askPin(action, payload, label) {
+  _pinAction  = action;
+  _pinPayload = payload;
+  _pinBuffer  = '';
+  _pinAttempts = 0;
+  document.getElementById('pinActionLabel').textContent =
+    action === 'delete' ? `ลบออเดอร์ของ: ${label}` : 'ล้างออเดอร์ทั้งหมด';
+  document.getElementById('pinErr').textContent = '';
+  updatePinDots(false);
+  document.getElementById('pinOverlay').classList.add('open');
+}
+
+function closePinModal() {
+  _pinBuffer = '';
+  _pinAction = null;
+  document.getElementById('pinOverlay').classList.remove('open');
+  updatePinDots(false);
+  document.getElementById('pinErr').textContent = '';
+}
+
+function pinKey(digit) {
+  if (_pinBuffer.length >= 6) return;
+  _pinBuffer += digit;
+  updatePinDots(false);
+  if (_pinBuffer.length === 6) {
+    setTimeout(checkPin, 120);   // หน่วงนิดเพื่อให้เห็น dot ที่ 6
+  }
+}
+
+function pinDel() {
+  if (_pinBuffer.length === 0) return;
+  _pinBuffer = _pinBuffer.slice(0, -1);
+  updatePinDots(false);
+  document.getElementById('pinErr').textContent = '';
+}
+
+function updatePinDots(isError) {
+  for (let i = 0; i < 6; i++) {
+    const dot = document.getElementById(`pd${i}`);
+    dot.className = 'pin-dot';
+    if (isError) dot.classList.add('error');
+    else if (i < _pinBuffer.length) dot.classList.add('filled');
+  }
+}
+
+async function checkPin() {
+  if (_pinBuffer === ADMIN_PIN) {
+    // ✅ ถูก
+    closePinModal();
+    if (_pinAction === 'delete') await deleteOrder(_pinPayload);
+    else if (_pinAction === 'clearAll') await doClearAll();
+  } else {
+    // ❌ ผิด
+    _pinAttempts++;
+    updatePinDots(true);
+    document.getElementById('pinErr').textContent =
+      `❌ PIN ไม่ถูกต้อง (${_pinAttempts} ครั้ง)`;
+    _pinBuffer = '';
+    setTimeout(() => {
+      updatePinDots(false);
+    }, 600);
   }
 }
 
